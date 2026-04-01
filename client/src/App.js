@@ -16,11 +16,17 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Default route — Intro/Splash screen */}
+        {/* 1. Intro/Splash */}
         <Route path="/" element={<Intro />} />
-        <Route path="/walkthrough" element={<Walkthrough />} />
+
+        {/* 2. Auth */}
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+
+        {/* 3. Walkthrough — shown after signup only */}
+        <Route path="/walkthrough" element={<Walkthrough />} />
+
+        {/* 4. Dashboard */}
         <Route path="/dashboard" element={<Dashboard />} />
       </Routes>
     </Router>

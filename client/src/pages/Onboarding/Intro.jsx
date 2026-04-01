@@ -124,7 +124,7 @@ export default function Intro() {
           style={fadeUp(step >= 4)}
         >
           <button
-            onClick={() => navigate('/walkthrough')}
+            onClick={() => navigate('/signup')}
             className="bg-white text-[#2E86AB] font-bold text-base px-12 py-4 rounded-full shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300"
           >
             Get Started

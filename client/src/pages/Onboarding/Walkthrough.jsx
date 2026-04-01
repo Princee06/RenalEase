@@ -50,7 +50,7 @@ export default function Walkthrough() {
     if (current < slides.length - 1) {
       goTo(current + 1);
     } else {
-      navigate('/signup');
+      navigate('/dashboard');
     }
   };
 
