@@ -1,5 +1,6 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import ProfileSetup from "./pages/Onboarding/ProfileSetup";
 
 // Auth
 import Login from "./pages/Auth/Login";
@@ -28,6 +29,7 @@ function App() {
 
         {/* 4. Dashboard */}
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/profile-setup" element={<ProfileSetup />} />
       </Routes>
     </Router>
   );
