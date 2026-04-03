@@ -1,6 +1,7 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import ProfileSetup from "./pages/Onboarding/ProfileSetup";
+import KidsDashboard from "./pages/Kids/KidsDashboard";
 
 // Auth
 import Login from "./pages/Auth/Login";
@@ -26,6 +27,7 @@ function App() {
 
         {/* 3. Walkthrough — shown after signup only */}
         <Route path="/walkthrough" element={<Walkthrough />} />
+        <Route path="/kids-dashboard" element={<KidsDashboard />} />
 
         {/* 4. Dashboard */}
         <Route path="/dashboard" element={<Dashboard />} />

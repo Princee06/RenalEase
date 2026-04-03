@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import logo from '../../assets/logo.png';
+import { useUser } from '../../context/UserContext';
 
 export default function Signup() {
   const navigate = useNavigate();
+  const { updateUser } = useUser();
   const [form, setForm] = useState({
     fullName: '',
     email: '',
     password: '',
     confirmPassword: '',
+    dob: '',
     role: 'patient',
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -20,7 +23,7 @@ export default function Signup() {
   };
 
   const handleSubmit = () => {
-    if (!form.fullName || !form.email || !form.password || !form.confirmPassword) {
+    if (!form.fullName || !form.email || !form.password || !form.confirmPassword || !form.dob) {
       setError('Please fill in all fields.');
       return;
     }
@@ -32,6 +35,12 @@ export default function Signup() {
       setError('Password must be at least 6 characters.');
       return;
     }
+    updateUser({
+      fullName: form.fullName,
+      email: form.email,
+      role: form.role,
+      dob: form.dob,
+    });
     navigate('/walkthrough');
   };
 
@@ -43,39 +52,31 @@ export default function Signup() {
       <div className="absolute bottom-[-100px] right-[-60px] w-[500px] h-[500px] bg-white opacity-5 rounded-full" />
       <div className="absolute top-1/2 left-[-120px] w-64 h-64 bg-white opacity-5 rounded-full" />
 
-      {/* Wide card — two columns */}
+      {/* Wide card */}
       <div className="w-full max-w-5xl rounded-3xl overflow-hidden shadow-2xl flex min-h-[600px]"
         style={{ background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.15)' }}
       >
 
-        {/* LEFT — Branding panel */}
+        {/* LEFT — Branding */}
         <div className="hidden md:flex flex-col items-center justify-center w-2/5 px-12 py-16 relative"
           style={{ background: 'rgba(255,255,255,0.05)' }}
         >
-          {/* Glow */}
           <div className="absolute w-64 h-64 rounded-full"
             style={{ background: 'radial-gradient(circle, rgba(168,218,220,0.15) 0%, transparent 70%)' }}
           />
-
           <img src={logo} alt="RenalEase" className="w-36 h-36 object-contain drop-shadow-2xl mb-6 relative z-10"
             style={{ filter: 'drop-shadow(0 0 20px rgba(168,218,220,0.4))' }}
           />
-
           <h1 className="text-4xl font-extrabold text-white tracking-tight relative z-10">
             Renal<span className="text-[#A8DADC]">Ease</span>
           </h1>
-
           <div className="w-12 h-0.5 bg-white/30 rounded-full my-3 relative z-10" />
-
           <p className="text-[#A8DADC] text-xs tracking-widest uppercase font-semibold relative z-10">
             Renal Health & Support
           </p>
-
           <p className="text-white/50 text-sm text-center mt-4 max-w-xs relative z-10">
             Your kidney health, simplified.
           </p>
-
-          {/* Feature bullets */}
           <div className="mt-10 flex flex-col gap-3 w-full relative z-10">
             {[
               { icon: '📊', text: 'Track labs & vitals' },
@@ -91,10 +92,9 @@ export default function Signup() {
           </div>
         </div>
 
-        {/* RIGHT — Form panel */}
-        <div className="flex-1 bg-white flex flex-col justify-center px-10 py-12 md:rounded-l-none rounded-3xl">
+        {/* RIGHT — Form */}
+        <div className="flex-1 bg-white flex flex-col justify-center px-10 py-12">
 
-          {/* Title */}
           <div className="mb-6">
             <h2 className="text-2xl font-bold text-[#1A5276]">Create your account</h2>
             <p className="text-gray-400 text-sm mt-1">Join thousands of kidney warriors today</p>
@@ -107,9 +107,7 @@ export default function Signup() {
                 key={r}
                 onClick={() => setForm({ ...form, role: r })}
                 className={`flex-1 py-2.5 text-sm font-semibold transition-all duration-300 ${
-                  form.role === r
-                    ? 'bg-[#2E86AB] text-white'
-                    : 'bg-white text-gray-400 hover:bg-gray-50'
+                  form.role === r ? 'bg-[#2E86AB] text-white' : 'bg-white text-gray-400 hover:bg-gray-50'
                 }`}
               >
                 {r === 'patient' ? '🏥 Patient' : '👨‍👩‍👧 Caregiver'}
@@ -117,17 +115,12 @@ export default function Signup() {
             ))}
           </div>
 
-          {/* Two column fields */}
           <div className="grid grid-cols-2 gap-4">
 
             {/* Full Name */}
             <div className="col-span-2">
               <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Full Name</label>
-              <input
-                type="text"
-                name="fullName"
-                value={form.fullName}
-                onChange={handleChange}
+              <input type="text" name="fullName" value={form.fullName} onChange={handleChange}
                 placeholder="John Doe"
                 className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#2E86AB] transition"
               />
@@ -136,12 +129,16 @@ export default function Signup() {
             {/* Email */}
             <div className="col-span-2">
               <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Email Address</label>
-              <input
-                type="email"
-                name="email"
-                value={form.email}
-                onChange={handleChange}
+              <input type="email" name="email" value={form.email} onChange={handleChange}
                 placeholder="john@example.com"
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#2E86AB] transition"
+              />
+            </div>
+
+            {/* Date of Birth */}
+            <div className="col-span-2">
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Date of Birth</label>
+              <input type="date" name="dob" value={form.dob} onChange={handleChange}
                 className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#2E86AB] transition"
               />
             </div>
@@ -150,18 +147,12 @@ export default function Signup() {
             <div>
               <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Password</label>
               <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  name="password"
-                  value={form.password}
-                  onChange={handleChange}
+                <input type={showPassword ? 'text' : 'password'} name="password" value={form.password} onChange={handleChange}
                   placeholder="Min. 6 characters"
                   className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#2E86AB] transition pr-14"
                 />
-                <button
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 hover:text-[#2E86AB] font-medium"
-                >
+                <button onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 hover:text-[#2E86AB] font-medium">
                   {showPassword ? 'Hide' : 'Show'}
                 </button>
               </div>
@@ -170,11 +161,7 @@ export default function Signup() {
             {/* Confirm Password */}
             <div>
               <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Confirm Password</label>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                name="confirmPassword"
-                value={form.confirmPassword}
-                onChange={handleChange}
+              <input type={showPassword ? 'text' : 'password'} name="confirmPassword" value={form.confirmPassword} onChange={handleChange}
                 placeholder="Re-enter password"
                 className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#2E86AB] transition"
               />
@@ -190,10 +177,8 @@ export default function Signup() {
           )}
 
           {/* Submit */}
-          <button
-            onClick={handleSubmit}
-            className="w-full bg-[#2E86AB] text-white font-bold text-base py-4 rounded-xl hover:bg-[#1A5276] active:scale-95 transition-all duration-300 shadow-lg mt-5"
-          >
+          <button onClick={handleSubmit}
+            className="w-full bg-[#2E86AB] text-white font-bold text-base py-4 rounded-xl hover:bg-[#1A5276] active:scale-95 transition-all duration-300 shadow-lg mt-5">
             Create Account
           </button>
 
@@ -215,13 +200,10 @@ export default function Signup() {
             Continue with Google
           </button>
 
-          {/* Login link */}
           <p className="text-center text-gray-400 text-sm mt-6">
             Already have an account?{' '}
-            <span
-              onClick={() => navigate('/login')}
-              className="text-[#2E86AB] font-bold cursor-pointer hover:underline"
-            >
+            <span onClick={() => navigate('/login')}
+              className="text-[#2E86AB] font-bold cursor-pointer hover:underline">
               Log In
             </span>
           </p>
