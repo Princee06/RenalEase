@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import ProfileSetup from "./pages/Onboarding/ProfileSetup";
 import KidsDashboard from "./pages/Kids/KidsDashboard";
 import Health from "./pages/Health/Health";
+import Medications from "./pages/Medications/Medications";
 
 // Auth
 import Login from "./pages/Auth/Login";
@@ -34,6 +35,7 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/profile-setup" element={<ProfileSetup />} />
         <Route path="/health" element={<Health />} />
+        <Route path="/medications" element={<Medications />} />
       </Routes>
     </Router>
   );

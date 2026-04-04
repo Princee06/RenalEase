@@ -2,38 +2,43 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import logo from '../../assets/logo.png';
 import { useUser } from '../../context/UserContext';
+import {
+  LayoutDashboard, Activity, Pill, Droplets, Salad, CalendarDays,
+  Stethoscope, BookOpen, Baby, Settings, LogOut, Bell, Menu,
+  FlaskConical, HeartPulse, Weight, Gauge, ChevronRight, Plus
+} from 'lucide-react';
 
 const NAV_ITEMS = [
-  { icon: '🏠', label: 'Dashboard', path: '/dashboard' },
-  { icon: '📊', label: 'Health Monitor', path: '/health' },
-  { icon: '💊', label: 'Medications', path: '/medications' },
-  { icon: '🩺', label: 'Dialysis', path: '/dialysis' },
-  { icon: '🥗', label: 'Diet & Lifestyle', path: '/diet' },
-  { icon: '📅', label: 'Appointments', path: '/appointments' },
-  { icon: '🏥', label: 'Doctors', path: '/doctors' },
-  { icon: '📚', label: 'CKD Education', path: '/education' },
-  { icon: '👧', label: 'Kids Mode', path: '/kids' },
-  { icon: '⚙️', label: 'Settings', path: '/settings' },
+  { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
+  { icon: Activity, label: 'Health Monitor', path: '/health' },
+  { icon: Pill, label: 'Medications', path: '/medications' },
+  { icon: Droplets, label: 'Dialysis', path: '/dialysis' },
+  { icon: Salad, label: 'Diet & Lifestyle', path: '/diet' },
+  { icon: CalendarDays, label: 'Appointments', path: '/appointments' },
+  { icon: Stethoscope, label: 'Doctors', path: '/doctors' },
+  { icon: BookOpen, label: 'CKD Education', path: '/education' },
+  { icon: Baby, label: 'Kids Mode', path: '/kids' },
+  { icon: Settings, label: 'Settings', path: '/settings' },
 ];
 
 const HEALTH_CARDS = [
-  { label: 'eGFR', value: '28', unit: 'mL/min', status: 'Low', color: 'bg-red-50 border-red-200', textColor: 'text-red-500', icon: '🫘' },
-  { label: 'Blood Pressure', value: '138/88', unit: 'mmHg', status: 'High', color: 'bg-orange-50 border-orange-200', textColor: 'text-orange-500', icon: '❤️' },
-  { label: 'Weight', value: '68', unit: 'kg', status: 'Normal', color: 'bg-green-50 border-green-200', textColor: 'text-green-500', icon: '⚖️' },
-  { label: 'Fluid Intake', value: '1.2', unit: 'L today', status: 'On Track', color: 'bg-blue-50 border-blue-200', textColor: 'text-blue-500', icon: '💧' },
+  { label: 'eGFR', value: '28', unit: 'mL/min', status: 'Low', colorClass: 'text-red-500', bgClass: 'bg-red-50', borderClass: 'border-red-200', icon: FlaskConical },
+  { label: 'Blood Pressure', value: '138/88', unit: 'mmHg', status: 'High', colorClass: 'text-orange-500', bgClass: 'bg-orange-50', borderClass: 'border-orange-200', icon: HeartPulse },
+  { label: 'Weight', value: '68', unit: 'kg', status: 'Normal', colorClass: 'text-green-500', bgClass: 'bg-green-50', borderClass: 'border-green-200', icon: Weight },
+  { label: 'Fluid Intake', value: '1.2', unit: 'L today', status: 'On Track', colorClass: 'text-blue-500', bgClass: 'bg-blue-50', borderClass: 'border-blue-200', icon: Droplets },
 ];
 
 const MEDICATIONS = [
-  { name: 'Amlodipine', dose: '5mg', time: '8:00 AM', taken: true },
+  { name: 'Nicardia XL 30', dose: '30mg', time: '8:00 AM', taken: true },
   { name: 'Sodium Bicarbonate', dose: '500mg', time: '1:00 PM', taken: false },
-  { name: 'Calcitriol', dose: '0.25mcg', time: '9:00 PM', taken: false },
+  { name: 'Ferium XT', dose: '325mg', time: '9:00 PM', taken: false },
 ];
 
 const QUICK_ACTIONS = [
-  { icon: '📅', label: 'Book Appointment', color: 'bg-[#EBF5FB] text-[#2E86AB]' },
-  { icon: '👨‍⚕️', label: 'Contact Doctor', color: 'bg-[#EAF9F0] text-[#1A7A4A]' },
-  { icon: '🥗', label: 'View Diet Plan', color: 'bg-[#FEF9E7] text-[#B7770D]' },
-  { icon: '📋', label: 'Lab Results', color: 'bg-[#F9EBEA] text-[#E74C3C]' },
+  { icon: CalendarDays, label: 'Book Appointment', bg: 'bg-[#EBF5FB]', color: 'text-[#2E86AB]', path: '/appointments' },
+  { icon: Stethoscope, label: 'Contact Doctor', bg: 'bg-[#EAF9F0]', color: 'text-[#1A7A4A]', path: '/doctors' },
+  { icon: Salad, label: 'View Diet Plan', bg: 'bg-[#FEF9E7]', color: 'text-[#B7770D]', path: '/diet' },
+  { icon: FlaskConical, label: 'Lab Results', bg: 'bg-[#F9EBEA]', color: 'text-[#E74C3C]', path: '/health' },
 ];
 
 function getGreeting() {
@@ -56,13 +61,17 @@ export default function Dashboard() {
 
   const firstName = user.fullName ? user.fullName.split(' ')[0] : 'there';
   const age = getAge();
-  const ckdLabel = user.ckdStage ? user.ckdStage.replace('stage', 'Stage ').replace('undiagnosed', 'Not Diagnosed') : 'CKD Patient';
-  const today = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  const ckdLabel = user.ckdStage
+    ? user.ckdStage.replace('stage', 'Stage ').replace('undiagnosed', 'Not Diagnosed')
+    : 'CKD Patient';
+  const today = new Date().toLocaleDateString('en-US', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
 
   return (
     <div className="flex h-screen bg-[#F4F9FF] overflow-hidden">
 
-      {/* ── SIDEBAR ── */}
+      {/* SIDEBAR */}
       <aside className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-gradient-to-b from-[#1A5276] to-[#154360] flex flex-col transition-all duration-300 shadow-2xl`}>
 
         {/* Logo */}
@@ -95,20 +104,23 @@ export default function Dashboard() {
 
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto py-4 px-2">
-          {NAV_ITEMS.map((item) => (
-            <button
-              key={item.path}
-              onClick={() => { setActivePath(item.path); navigate(item.path); }}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl mb-1 transition-all duration-200 text-left ${
-                activePath === item.path
-                  ? 'bg-white/15 text-white font-semibold'
-                  : 'text-white/60 hover:bg-white/10 hover:text-white'
-              }`}
-            >
-              <span className="text-lg flex-shrink-0">{item.icon}</span>
-              {sidebarOpen && <span className="text-sm">{item.label}</span>}
-            </button>
-          ))}
+          {NAV_ITEMS.map((item) => {
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.path}
+                onClick={() => { setActivePath(item.path); navigate(item.path); }}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl mb-1 transition-all duration-200 text-left ${
+                  activePath === item.path
+                    ? 'bg-white/15 text-white font-semibold'
+                    : 'text-white/60 hover:bg-white/10 hover:text-white'
+                }`}
+              >
+                <Icon size={18} className="flex-shrink-0" />
+                {sidebarOpen && <span className="text-sm">{item.label}</span>}
+              </button>
+            );
+          })}
         </nav>
 
         {/* Sign Out */}
@@ -117,36 +129,29 @@ export default function Dashboard() {
             onClick={() => navigate('/')}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/60 hover:bg-white/10 hover:text-white transition-all duration-200"
           >
-            <span className="text-lg">🚪</span>
+            <LogOut size={18} className="flex-shrink-0" />
             {sidebarOpen && <span className="text-sm">Sign Out</span>}
           </button>
         </div>
       </aside>
 
-      {/* ── MAIN CONTENT ── */}
+      {/* MAIN */}
       <main className="flex-1 overflow-y-auto">
 
         {/* Top Bar */}
         <div className="bg-white border-b border-gray-100 px-8 py-4 flex items-center justify-between sticky top-0 z-10 shadow-sm">
           <div className="flex items-center gap-4">
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="text-gray-400 hover:text-[#2E86AB] transition-colors"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
+            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-gray-400 hover:text-[#2E86AB] transition-colors">
+              <Menu size={22} />
             </button>
             <div>
-              <h1 className="text-lg font-bold text-[#1A5276]">
-                {getGreeting()}, {firstName}! 👋
-              </h1>
+              <h1 className="text-lg font-bold text-[#1A5276]">{getGreeting()}, {firstName}! 👋</h1>
               <p className="text-gray-400 text-xs">{today}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <button className="relative w-9 h-9 bg-[#F4F9FF] rounded-full flex items-center justify-center hover:bg-[#EBF5FB] transition-colors">
-              <span className="text-lg">🔔</span>
+              <Bell size={18} className="text-gray-500" />
               <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
             </button>
             <div className="w-9 h-9 rounded-full bg-[#A8DADC] flex items-center justify-center text-sm font-bold text-[#1A5276]">
@@ -164,35 +169,38 @@ export default function Dashboard() {
               <p className="text-[#A8DADC] text-sm font-medium mb-1">
                 {ckdLabel} {user.dialysis === 'yes' ? '• On Dialysis' : ''}
               </p>
-              <h2 className="text-white text-2xl font-bold mb-2">
-                Welcome back, {firstName} 💙
-              </h2>
+              <h2 className="text-white text-2xl font-bold mb-2">Welcome back, {firstName} 💙</h2>
               <p className="text-white/70 text-sm max-w-md">
                 Track your health, manage your records, and stay on top of your treatment. You're doing great!
               </p>
-              <button className="mt-3 bg-white/20 hover:bg-white/30 text-white text-sm font-semibold px-5 py-2 rounded-full transition-all">
-                Learn about CKD →
+              <button className="mt-3 bg-white/20 hover:bg-white/30 text-white text-sm font-semibold px-5 py-2 rounded-full transition-all flex items-center gap-2">
+                Learn about CKD <ChevronRight size={14} />
               </button>
             </div>
-            <div className="hidden md:block text-8xl opacity-20">🫘</div>
+            <div className="hidden md:block opacity-10">
+              <Activity size={120} className="text-white" />
+            </div>
           </div>
 
           {/* Health Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            {HEALTH_CARDS.map((card) => (
-              <div key={card.label} className={`bg-white border ${card.color} rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow`}>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-2xl">{card.icon}</span>
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${card.color} ${card.textColor}`}>
-                    {card.status}
-                  </span>
+            {HEALTH_CARDS.map((card) => {
+              const Icon = card.icon;
+              return (
+                <div key={card.label} className={`bg-white border ${card.borderClass} rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <Icon size={22} className={card.colorClass} />
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${card.bgClass} ${card.colorClass}`}>
+                      {card.status}
+                    </span>
+                  </div>
+                  <p className="text-gray-500 text-xs font-medium mb-1">{card.label}</p>
+                  <p className="text-gray-800 text-xl font-bold">{card.value}
+                    <span className="text-gray-400 text-xs font-normal ml-1">{card.unit}</span>
+                  </p>
                 </div>
-                <p className="text-gray-500 text-xs font-medium mb-1">{card.label}</p>
-                <p className="text-gray-800 text-xl font-bold">{card.value}
-                  <span className="text-gray-400 text-xs font-normal ml-1">{card.unit}</span>
-                </p>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Bottom Grid */}
@@ -201,15 +209,19 @@ export default function Dashboard() {
             {/* Medications Today */}
             <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold text-[#1A5276] text-sm">Today's Medications</h3>
-                <button className="text-[#2E86AB] text-xs font-semibold hover:underline">View All</button>
+                <h3 className="font-bold text-[#1A5276] text-sm flex items-center gap-2">
+                  <Pill size={16} className="text-[#2E86AB]" /> Today's Medications
+                </h3>
+                <button className="text-[#2E86AB] text-xs font-semibold hover:underline flex items-center gap-1">
+                  View All <ChevronRight size={12} />
+                </button>
               </div>
               <div className="flex flex-col gap-3">
                 {MEDICATIONS.map((med) => (
                   <div key={med.name} className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${med.taken ? 'bg-green-100' : 'bg-gray-100'}`}>
-                        {med.taken ? '✅' : '💊'}
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${med.taken ? 'bg-green-100' : 'bg-gray-100'}`}>
+                        <Pill size={14} className={med.taken ? 'text-green-500' : 'text-gray-400'} />
                       </div>
                       <div>
                         <p className={`text-sm font-semibold ${med.taken ? 'text-gray-400 line-through' : 'text-gray-700'}`}>
@@ -230,29 +242,41 @@ export default function Dashboard() {
 
             {/* Quick Actions */}
             <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-              <h3 className="font-bold text-[#1A5276] text-sm mb-4">Quick Actions</h3>
+              <h3 className="font-bold text-[#1A5276] text-sm mb-4 flex items-center gap-2">
+                <Gauge size={16} className="text-[#2E86AB]" /> Quick Actions
+              </h3>
               <div className="grid grid-cols-2 gap-3">
-                {QUICK_ACTIONS.map((action) => (
-                  <button
-                    key={action.label}
-                    className={`${action.color} rounded-xl p-3 flex flex-col items-center gap-1 hover:scale-105 active:scale-95 transition-all duration-200`}
-                  >
-                    <span className="text-2xl">{action.icon}</span>
-                    <span className="text-xs font-semibold text-center leading-tight">{action.label}</span>
-                  </button>
-                ))}
+                {QUICK_ACTIONS.map((action) => {
+                  const Icon = action.icon;
+                  return (
+                    <button
+                      key={action.label}
+                      onClick={() => navigate(action.path)}
+                      className={`${action.bg} ${action.color} rounded-xl p-3 flex flex-col items-center gap-2 hover:scale-105 active:scale-95 transition-all duration-200`}
+                    >
+                      <Icon size={22} />
+                      <span className="text-xs font-semibold text-center leading-tight">{action.label}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
             {/* Next Appointment */}
             <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold text-[#1A5276] text-sm">Next Appointment</h3>
-                <button className="text-[#2E86AB] text-xs font-semibold hover:underline">View All</button>
+                <h3 className="font-bold text-[#1A5276] text-sm flex items-center gap-2">
+                  <CalendarDays size={16} className="text-[#2E86AB]" /> Next Appointment
+                </h3>
+                <button className="text-[#2E86AB] text-xs font-semibold hover:underline flex items-center gap-1">
+                  View All <ChevronRight size={12} />
+                </button>
               </div>
               <div className="bg-[#F4F9FF] rounded-xl p-4 mb-3">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="w-10 h-10 rounded-full bg-[#A8DADC] flex items-center justify-center text-lg">👨‍⚕️</div>
+                  <div className="w-10 h-10 rounded-full bg-[#A8DADC] flex items-center justify-center">
+                    <Stethoscope size={18} className="text-[#1A5276]" />
+                  </div>
                   <div>
                     <p className="text-sm font-bold text-[#1A5276]">
                       {user.doctorName || 'No doctor added yet'}
@@ -261,12 +285,19 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2 text-xs text-gray-500">
-                  <span>🏥</span>
+                  <CalendarDays size={12} />
+                  <span>April 5, 2026 • 10:30 AM</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
+                  <Stethoscope size={12} />
                   <span>{user.hospital || 'Add your hospital in profile'}</span>
                 </div>
               </div>
-              <button className="w-full bg-[#2E86AB] text-white text-sm font-semibold py-2.5 rounded-xl hover:bg-[#1A5276] transition-all">
-                + Book New Appointment
+              <button
+                onClick={() => navigate('/appointments')}
+                className="w-full bg-[#2E86AB] text-white text-sm font-semibold py-2.5 rounded-xl hover:bg-[#1A5276] transition-all flex items-center justify-center gap-2"
+              >
+                <Plus size={16} /> Book New Appointment
               </button>
             </div>
 
