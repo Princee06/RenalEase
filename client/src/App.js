@@ -5,6 +5,7 @@ import KidsDashboard from "./pages/Kids/KidsDashboard";
 import Health from "./pages/Health/Health";
 import Medications from "./pages/Medications/Medications";
 import Dialysis from "./pages/Dialysis/Dialysis";
+import Profile from "./pages/Dashboard/Profile";
 
 // Auth
 import Login from "./pages/Auth/Login";
@@ -37,6 +38,7 @@ function App() {
         <Route path="/profile-setup" element={<ProfileSetup />} />
         <Route path="/health" element={<Health />} />
         <Route path="/dialysis" element={<Dialysis />} />
+        <Route path="/profile" element={<Profile />} />
 
         <Route path="/medications" element={<Medications />} />
       </Routes>

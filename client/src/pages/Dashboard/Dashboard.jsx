@@ -85,22 +85,26 @@ export default function Dashboard() {
         </div>
 
         {/* Profile */}
-        {sidebarOpen && (
-          <div className="flex flex-col items-center py-6 px-4 border-b border-white/10">
-            <div className="w-16 h-16 rounded-full bg-[#A8DADC] flex items-center justify-center text-xl font-bold text-[#1A5276] mb-2 shadow-lg">
-              {getInitials(user.fullName)}
-            </div>
-            <p className="text-white font-semibold text-sm">{user.fullName || 'Your Name'}</p>
-            <p className="text-white/50 text-xs">
-              {age ? `${age} y.o` : ''}{age && ckdLabel ? ' • ' : ''}{ckdLabel}
-            </p>
-            {user.dialysis === 'yes' && (
-              <span className="mt-2 bg-red-500/20 text-red-300 text-xs px-3 py-0.5 rounded-full font-medium">
-                On Dialysis
-              </span>
-            )}
-          </div>
-        )}
+{sidebarOpen && (
+  <div
+    className="flex flex-col items-center py-6 px-4 border-b border-white/10 cursor-pointer hover:bg-white/5 transition-all"
+    onClick={() => navigate('/profile')}
+  >
+    <div className="w-16 h-16 rounded-full bg-[#A8DADC] flex items-center justify-center text-xl font-bold text-[#1A5276] mb-2 shadow-lg">
+      {getInitials(user.fullName)}
+    </div>
+    <p className="text-white font-semibold text-sm">{user.fullName || 'Your Name'}</p>
+    <p className="text-white/50 text-xs">
+      {age ? `${age} y.o` : ''}{age && ckdLabel ? ' • ' : ''}{ckdLabel}
+    </p>
+    {user.dialysis === 'yes' && (
+      <span className="mt-2 bg-red-500/20 text-red-300 text-xs px-3 py-0.5 rounded-full font-medium">
+        On Dialysis
+      </span>
+    )}
+    <p className="text-white/30 text-xs mt-1">View Profile</p>
+  </div>
+)}
 
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto py-4 px-2">
@@ -300,7 +304,6 @@ export default function Dashboard() {
                 <Plus size={16} /> Book New Appointment
               </button>
             </div>
-
           </div>
         </div>
       </main>

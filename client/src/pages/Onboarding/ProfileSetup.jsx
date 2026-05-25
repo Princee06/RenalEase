@@ -1,24 +1,23 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import logo from '../../assets/logo.png';
+import { useUser } from '../../context/UserContext';
 
 const STEPS = ['Personal Info', 'Medical Info', 'Doctor & Emergency'];
 
 export default function ProfileSetup() {
   const navigate = useNavigate();
+  const { updateUser, isKid } = useUser();
   const [step, setStep] = useState(0);
   const [form, setForm] = useState({
-    // Personal
     dob: '',
     gender: '',
     phone: '',
     address: '',
-    // Medical
     ckdStage: '',
     dialysis: '',
     dialysisType: '',
     allergies: '',
-    // Doctor & Emergency
     doctorName: '',
     hospital: '',
     doctorPhone: '',
@@ -32,8 +31,16 @@ export default function ProfileSetup() {
   };
 
   const handleNext = () => {
-    if (step < STEPS.length - 1) setStep(step + 1);
-    else navigate('/dashboard');
+    if (step < STEPS.length - 1) {
+      setStep(step + 1);
+    } else {
+      updateUser(form);
+      if (isKid()) {
+        navigate('/kids-dashboard');
+      } else {
+        navigate('/dashboard');
+      }
+    }
   };
 
   const handleBack = () => {
@@ -46,36 +53,26 @@ export default function ProfileSetup() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#2E86AB] via-[#1A5276] to-[#154360] flex items-center justify-center px-6 py-10 relative overflow-hidden">
 
-      {/* Background bubbles */}
       <div className="absolute top-[-80px] left-[-80px] w-96 h-96 bg-white opacity-5 rounded-full" />
       <div className="absolute bottom-[-100px] right-[-60px] w-[500px] h-[500px] bg-white opacity-5 rounded-full" />
 
-      {/* Wide card */}
       <div className="w-full max-w-5xl rounded-3xl overflow-hidden shadow-2xl flex min-h-[600px]"
-        style={{ background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.15)' }}
-      >
+        style={{ background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.15)' }}>
 
-        {/* LEFT — Branding + Steps */}
+        {/* LEFT */}
         <div className="hidden md:flex flex-col items-center justify-center w-2/5 px-12 py-16 relative"
-          style={{ background: 'rgba(255,255,255,0.05)' }}
-        >
+          style={{ background: 'rgba(255,255,255,0.05)' }}>
           <div className="absolute w-64 h-64 rounded-full"
-            style={{ background: 'radial-gradient(circle, rgba(168,218,220,0.15) 0%, transparent 70%)' }}
-          />
-
+            style={{ background: 'radial-gradient(circle, rgba(168,218,220,0.15) 0%, transparent 70%)' }} />
           <img src={logo} alt="RenalEase"
             className="w-28 h-28 object-contain drop-shadow-2xl mb-4 relative z-10"
-            style={{ filter: 'drop-shadow(0 0 20px rgba(168,218,220,0.4))' }}
-          />
-
+            style={{ filter: 'drop-shadow(0 0 20px rgba(168,218,220,0.4))' }} />
           <h1 className="text-3xl font-extrabold text-white tracking-tight relative z-10 mb-1">
             Renal<span className="text-[#A8DADC]">Ease</span>
           </h1>
           <p className="text-white/50 text-sm text-center mb-10 relative z-10">
             Let's set up your health profile
           </p>
-
-          {/* Step indicators */}
           <div className="flex flex-col gap-4 w-full relative z-10">
             {STEPS.map((s, i) => (
               <div key={s} className="flex items-center gap-4">
@@ -94,23 +91,15 @@ export default function ProfileSetup() {
               </div>
             ))}
           </div>
-
-          {/* Progress bar */}
           <div className="w-full bg-white/10 rounded-full h-1.5 mt-10 relative z-10">
-            <div
-              className="bg-[#A8DADC] h-1.5 rounded-full transition-all duration-500"
-              style={{ width: `${((step + 1) / STEPS.length) * 100}%` }}
-            />
+            <div className="bg-[#A8DADC] h-1.5 rounded-full transition-all duration-500"
+              style={{ width: `${((step + 1) / STEPS.length) * 100}%` }} />
           </div>
-          <p className="text-white/40 text-xs mt-2 relative z-10">
-            Step {step + 1} of {STEPS.length}
-          </p>
+          <p className="text-white/40 text-xs mt-2 relative z-10">Step {step + 1} of {STEPS.length}</p>
         </div>
 
-        {/* RIGHT — Form */}
+        {/* RIGHT */}
         <div className="flex-1 bg-white flex flex-col justify-between px-10 py-12">
-
-          {/* Step title */}
           <div>
             <div className="mb-6">
               <p className="text-xs font-semibold text-[#2E86AB] uppercase tracking-widest mb-1">
@@ -207,14 +196,11 @@ export default function ProfileSetup() {
                   <label className={labelClass}>Doctor's Phone</label>
                   <input type="tel" name="doctorPhone" value={form.doctorPhone} onChange={handleChange} placeholder="+91 9876543210" className={inputClass} />
                 </div>
-
-                {/* Divider */}
                 <div className="col-span-2 flex items-center gap-3 my-1">
                   <div className="flex-1 h-px bg-gray-200" />
                   <span className="text-gray-400 text-xs font-medium">Emergency Contact</span>
                   <div className="flex-1 h-px bg-gray-200" />
                 </div>
-
                 <div className="col-span-2 md:col-span-1">
                   <label className={labelClass}>Contact Name</label>
                   <input type="text" name="emergencyName" value={form.emergencyName} onChange={handleChange} placeholder="e.g. Jane Doe" className={inputClass} />
@@ -235,24 +221,20 @@ export default function ProfileSetup() {
           <div className="flex justify-between items-center mt-8">
             <button
               onClick={handleBack}
+              disabled={step === 0}
               className={`px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-300 ${
                 step === 0
                   ? 'text-gray-300 cursor-not-allowed'
                   : 'text-[#2E86AB] hover:bg-[#F4F9FF] border border-[#2E86AB]'
-              }`}
-              disabled={step === 0}
-            >
+              }`}>
               ← Back
             </button>
-
             <button
               onClick={handleNext}
-              className="bg-[#2E86AB] text-white font-bold px-10 py-3 rounded-xl hover:bg-[#1A5276] active:scale-95 transition-all duration-300 shadow-lg"
-            >
-              {step === STEPS.length - 1 ? "Go to Dashboard 🚀" : "Next →"}
+              className="bg-[#2E86AB] text-white font-bold px-10 py-3 rounded-xl hover:bg-[#1A5276] active:scale-95 transition-all duration-300 shadow-lg">
+              {step === STEPS.length - 1 ? 'Go to Dashboard 🚀' : 'Next →'}
             </button>
           </div>
-
         </div>
       </div>
     </div>
