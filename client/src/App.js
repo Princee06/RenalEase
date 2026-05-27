@@ -7,6 +7,7 @@ import Medications from "./pages/Medications/Medications";
 import Dialysis from "./pages/Dialysis/Dialysis";
 import Profile from "./pages/Dashboard/Profile";
 import Appointments from "./pages/Appointments/Appointments";
+import Diet from "./pages/Diet/Diet";
 
 // Auth
 import Login from "./pages/Auth/Login";
@@ -43,6 +44,7 @@ function App() {
 
         <Route path="/medications" element={<Medications />} />
         <Route path="/appointments" element={<Appointments />} />
+        <Route path="/diet" element={<Diet />} />
       </Routes>
     </Router>
   );
