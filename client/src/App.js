@@ -8,6 +8,7 @@ import Dialysis from "./pages/Dialysis/Dialysis";
 import Profile from "./pages/Dashboard/Profile";
 import Appointments from "./pages/Appointments/Appointments";
 import Diet from "./pages/Diet/Diet";
+import Hospitals from "./pages/Hospitals/Hospitals";
 
 // Auth
 import Login from "./pages/Auth/Login";
@@ -24,27 +25,20 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* 1. Intro/Splash */}
         <Route path="/" element={<Intro />} />
-
-        {/* 2. Auth */}
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-
-        {/* 3. Walkthrough — shown after signup only */}
         <Route path="/walkthrough" element={<Walkthrough />} />
-        <Route path="/kids-dashboard" element={<KidsDashboard />} />
-
-        {/* 4. Dashboard */}
-        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/profile-setup" element={<ProfileSetup />} />
-        <Route path="/health" element={<Health />} />
-        <Route path="/dialysis" element={<Dialysis />} />
+        <Route path="/kids-dashboard" element={<KidsDashboard />} />
+        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/profile" element={<Profile />} />
-
+        <Route path="/health" element={<Health />} />
         <Route path="/medications" element={<Medications />} />
+        <Route path="/dialysis" element={<Dialysis />} />
         <Route path="/appointments" element={<Appointments />} />
         <Route path="/diet" element={<Diet />} />
+        <Route path="/doctors" element={<Hospitals />} />
       </Routes>
     </Router>
   );
