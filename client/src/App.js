@@ -9,6 +9,7 @@ import Profile from "./pages/Dashboard/Profile";
 import Appointments from "./pages/Appointments/Appointments";
 import Diet from "./pages/Diet/Diet";
 import Hospitals from "./pages/Hospitals/Hospitals";
+import Education from "./pages/Education/Education";
 
 // Auth
 import Login from "./pages/Auth/Login";
@@ -39,6 +40,7 @@ function App() {
         <Route path="/appointments" element={<Appointments />} />
         <Route path="/diet" element={<Diet />} />
         <Route path="/doctors" element={<Hospitals />} />
+        <Route path="/education" element={<Education />} />
       </Routes>
     </Router>
   );
