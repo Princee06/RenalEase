@@ -1,7 +1,6 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import ProfileSetup from "./pages/Onboarding/ProfileSetup";
-import KidsDashboard from "./pages/Kids/KidsDashboard";
 import Health from "./pages/Health/Health";
 import Medications from "./pages/Medications/Medications";
 import Dialysis from "./pages/Dialysis/Dialysis";
@@ -10,6 +9,7 @@ import Appointments from "./pages/Appointments/Appointments";
 import Diet from "./pages/Diet/Diet";
 import Hospitals from "./pages/Hospitals/Hospitals";
 import Education from "./pages/Education/Education";
+import KidsMode from "./pages/Kids/KidsMode";
 
 // Auth
 import Login from "./pages/Auth/Login";
@@ -31,7 +31,6 @@ function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/walkthrough" element={<Walkthrough />} />
         <Route path="/profile-setup" element={<ProfileSetup />} />
-        <Route path="/kids-dashboard" element={<KidsDashboard />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/health" element={<Health />} />
@@ -41,6 +40,8 @@ function App() {
         <Route path="/diet" element={<Diet />} />
         <Route path="/doctors" element={<Hospitals />} />
         <Route path="/education" element={<Education />} />
+        <Route path="/kids-dashboard" element={<KidsMode />} />
+        <Route path="/kids" element={<KidsMode />} />
       </Routes>
     </Router>
   );
