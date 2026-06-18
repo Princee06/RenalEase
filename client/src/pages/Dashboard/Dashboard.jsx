@@ -2,10 +2,28 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import logo from '../../assets/logo.png';
 import { useUser } from '../../context/UserContext';
+
 import {
-  LayoutDashboard, Activity, Pill, Droplets, Salad, CalendarDays,
-  Stethoscope, BookOpen, Baby, Settings, LogOut, Bell, Menu,
-  FlaskConical, HeartPulse, Weight, Gauge, ChevronRight, Plus
+  LayoutDashboard,
+  Activity,
+  Pill,
+  Droplets,
+  Salad,
+  CalendarDays,
+  Stethoscope,
+  BookOpen,
+  Baby,
+  Settings,
+  LogOut,
+  Bell,
+  Menu,
+  FlaskConical,
+  HeartPulse,
+  Weight,
+  Gauge,
+  ChevronRight,
+  Plus,
+  MessageSquare
 } from 'lucide-react';
 
 const NAV_ITEMS = [
@@ -19,6 +37,7 @@ const NAV_ITEMS = [
   { icon: BookOpen, label: 'CKD Education', path: '/education' },
   { icon: Baby, label: 'Kids Mode', path: '/kids' },
   { icon: Settings, label: 'Settings', path: '/settings' },
+  { icon: MessageSquare, label: 'AI Assistant', path: '/chatbot' },
 ];
 
 const HEALTH_CARDS = [

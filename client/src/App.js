@@ -10,6 +10,8 @@ import Diet from "./pages/Diet/Diet";
 import Hospitals from "./pages/Hospitals/Hospitals";
 import Education from "./pages/Education/Education";
 import KidsMode from "./pages/Kids/KidsMode";
+import Chatbot from "./pages/Chatbot/Chatbot";
+import FloatingChatBubble from "./pages/Chatbot/FloatingChatBubble";
 
 // Auth
 import Login from "./pages/Auth/Login";
@@ -42,7 +44,11 @@ function App() {
         <Route path="/education" element={<Education />} />
         <Route path="/kids-dashboard" element={<KidsMode />} />
         <Route path="/kids" element={<KidsMode />} />
+        <Route path="/chatbot" element={<Chatbot />} />
       </Routes>
+
+      {/* Floating chat bubble — visible on every page except /chatbot (handled inside the component) */}
+      <FloatingChatBubble />
     </Router>
   );
 }
