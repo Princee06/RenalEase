@@ -23,7 +23,8 @@ import {
   Gauge,
   ChevronRight,
   Plus,
-  MessageSquare
+  MessageSquare,
+  BarChart2
 } from 'lucide-react';
 
 const NAV_ITEMS = [
@@ -38,6 +39,7 @@ const NAV_ITEMS = [
   { icon: Baby, label: 'Kids Mode', path: '/kids' },
   { icon: Settings, label: 'Settings', path: '/settings' },
   { icon: MessageSquare, label: 'AI Assistant', path: '/chatbot' },
+  { icon: BarChart2, label: 'Analytics', path: '/analytics' },
 ];
 
 const HEALTH_CARDS = [

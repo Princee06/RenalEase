@@ -12,6 +12,7 @@ import Education from "./pages/Education/Education";
 import KidsMode from "./pages/Kids/KidsMode";
 import Chatbot from "./pages/Chatbot/Chatbot";
 import FloatingChatBubble from "./pages/Chatbot/FloatingChatBubble";
+import Analytics from "./pages/Analytics/Analytics";
 
 // Auth
 import Login from "./pages/Auth/Login";
@@ -45,9 +46,9 @@ function App() {
         <Route path="/kids-dashboard" element={<KidsMode />} />
         <Route path="/kids" element={<KidsMode />} />
         <Route path="/chatbot" element={<Chatbot />} />
+        <Route path="/analytics" element={<Analytics />} />
       </Routes>
 
-      {/* Floating chat bubble — visible on every page except /chatbot (handled inside the component) */}
       <FloatingChatBubble />
     </Router>
   );
