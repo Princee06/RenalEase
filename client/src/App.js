@@ -13,6 +13,7 @@ import KidsMode from "./pages/Kids/KidsMode";
 import Chatbot from "./pages/Chatbot/Chatbot";
 import FloatingChatBubble from "./pages/Chatbot/FloatingChatBubble";
 import Analytics from "./pages/Analytics/Analytics";
+import Settings from "./pages/Settings/Settings";
 
 // Auth
 import Login from "./pages/Auth/Login";
@@ -47,6 +48,7 @@ function App() {
         <Route path="/kids" element={<KidsMode />} />
         <Route path="/chatbot" element={<Chatbot />} />
         <Route path="/analytics" element={<Analytics />} />
+        <Route path="/settings" element={<Settings />} />
       </Routes>
 
       <FloatingChatBubble />
