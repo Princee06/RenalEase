@@ -2,13 +2,32 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import logo from '../../assets/logo.png';
 import { useUser } from '../../context/UserContext';
+import { api } from '../../api';
 
 const STEPS = ['Personal Info', 'Medical Info', 'Doctor & Emergency'];
+
+// Frontend CKD stage values -> backend enum values
+const CKD_STAGE_MAP = {
+  stage1: 'Stage 1',
+  stage2: 'Stage 2',
+  stage3: 'Stage 3a',
+  stage4: 'Stage 4',
+  stage5: 'Stage 5',
+  undiagnosed: 'Unknown',
+};
+
+// Frontend dialysis type -> backend enum values
+const DIALYSIS_TYPE_MAP = {
+  hemodialysis: 'Hemodialysis',
+  peritoneal: 'Peritoneal Dialysis',
+};
 
 export default function ProfileSetup() {
   const navigate = useNavigate();
   const { updateUser, isKid } = useUser();
   const [step, setStep] = useState(0);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const [form, setForm] = useState({
     dob: '',
     gender: '',
@@ -30,16 +49,65 @@ export default function ProfileSetup() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleNext = () => {
+  // Pushes the completed form to the backend, mapping field names/values
+  // to match the User model's shape.
+  const syncToBackend = async () => {
+    const payload = {
+      dateOfBirth: form.dob || undefined,
+      gender: form.gender || undefined,
+      phone: form.phone || undefined,
+      address: form.address || undefined,
+      ckdStage: CKD_STAGE_MAP[form.ckdStage] || 'Unknown',
+      dialysisType:
+        form.dialysis === 'yes'
+          ? DIALYSIS_TYPE_MAP[form.dialysisType] || 'None'
+          : 'None',
+      allergies: form.allergies || undefined,
+      doctorName: form.doctorName || undefined,
+      hospital: form.hospital || undefined,
+      doctorPhone: form.doctorPhone || undefined,
+      emergencyContact: {
+        name: form.emergencyName || undefined,
+        relationship: form.emergencyRelation || undefined,
+        phone: form.emergencyPhone || undefined,
+      },
+    };
+
+    await api.put('/users/me', payload);
+  };
+
+  const handleNext = async () => {
     if (step < STEPS.length - 1) {
       setStep(step + 1);
-    } else {
-      updateUser(form);
+      return;
+    }
+
+    // Final step: save locally (as before) AND sync to backend
+    updateUser(form);
+    setSaving(true);
+    setSaveError('');
+    try {
+      await syncToBackend();
       if (isKid()) {
         navigate('/kids-dashboard');
       } else {
         navigate('/dashboard');
       }
+    } catch (err) {
+      // Don't block the user from reaching the dashboard just because the
+      // sync failed (e.g. temporary network issue) — surface the error but
+      // let them continue, since local state already has their info.
+      setSaveError(
+        'We saved your info locally but could not sync it to the server. You can try again later from your profile.'
+      );
+      console.error('Profile sync failed:', err);
+      if (isKid()) {
+        navigate('/kids-dashboard');
+      } else {
+        navigate('/dashboard');
+      }
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -215,6 +283,12 @@ export default function ProfileSetup() {
                 </div>
               </div>
             )}
+
+            {saveError && (
+              <div className="bg-amber-50 border border-amber-200 text-amber-700 text-sm px-4 py-3 rounded-xl mt-4">
+                {saveError}
+              </div>
+            )}
           </div>
 
           {/* Navigation Buttons */}
@@ -231,8 +305,9 @@ export default function ProfileSetup() {
             </button>
             <button
               onClick={handleNext}
-              className="bg-[#2E86AB] text-white font-bold px-10 py-3 rounded-xl hover:bg-[#1A5276] active:scale-95 transition-all duration-300 shadow-lg">
-              {step === STEPS.length - 1 ? 'Go to Dashboard 🚀' : 'Next →'}
+              disabled={saving}
+              className="bg-[#2E86AB] text-white font-bold px-10 py-3 rounded-xl hover:bg-[#1A5276] active:scale-95 transition-all duration-300 shadow-lg disabled:opacity-60 disabled:cursor-not-allowed">
+              {saving ? 'Saving...' : step === STEPS.length - 1 ? 'Go to Dashboard 🚀' : 'Next →'}
             </button>
           </div>
         </div>

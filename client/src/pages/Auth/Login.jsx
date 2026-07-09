@@ -1,23 +1,43 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';import logo from '../../assets/logo.png';
+import { useNavigate } from 'react-router-dom';
+import logo from '../../assets/logo.png';
 import { useUser } from '../../context/UserContext';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Login() {
   const navigate = useNavigate();
   const { updateUser } = useUser();
+  const { login } = useAuth();
   const [form, setForm] = useState({
     email: '',
     password: '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
     setError('');
   };
 
-  const handleLogin = () => {
+  // Firebase error codes -> friendly messages
+  const friendlyError = (err) => {
+    switch (err.code) {
+      case 'auth/invalid-credential':
+      case 'auth/wrong-password':
+      case 'auth/user-not-found':
+        return 'Incorrect email or password.';
+      case 'auth/invalid-email':
+        return 'Please enter a valid email address.';
+      case 'auth/too-many-requests':
+        return 'Too many attempts. Please wait a moment and try again.';
+      default:
+        return 'Something went wrong signing you in. Please try again.';
+    }
+  };
+
+  const handleLogin = async () => {
     if (!form.email || !form.password) {
       setError('Please fill in all fields.');
       return;
@@ -26,8 +46,18 @@ export default function Login() {
       setError('Password must be at least 6 characters.');
       return;
     }
-    updateUser({ email: form.email });
-    navigate('/dashboard');
+
+    setLoading(true);
+    setError('');
+    try {
+      await login(form.email, form.password);
+      updateUser({ email: form.email });
+      navigate('/dashboard');
+    } catch (err) {
+      setError(friendlyError(err));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -144,9 +174,10 @@ export default function Login() {
             {/* Sign In Button */}
             <button
               onClick={handleLogin}
-              className="w-full bg-[#2E86AB] text-white font-bold text-base py-4 rounded-xl hover:bg-[#1A5276] active:scale-95 transition-all duration-300 shadow-lg"
+              disabled={loading}
+              className="w-full bg-[#2E86AB] text-white font-bold text-base py-4 rounded-xl hover:bg-[#1A5276] active:scale-95 transition-all duration-300 shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              Sign In
+              {loading ? 'Signing in...' : 'Sign In'}
             </button>
 
             {/* Divider */}
@@ -156,7 +187,7 @@ export default function Login() {
               <div className="flex-1 h-px bg-gray-200" />
             </div>
 
-            {/* Google */}
+            {/* Google (not yet wired to a real provider) */}
             <button className="w-full border border-gray-200 text-gray-600 font-semibold py-3 rounded-xl hover:bg-gray-50 active:scale-95 transition-all duration-300 flex items-center justify-center gap-3">
               <svg width="18" height="18" viewBox="0 0 48 48">
                 <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
@@ -174,7 +205,7 @@ export default function Login() {
             Don't have an account?{' '}
             <span
               onClick={() => navigate('/signup')}
-              className="text-[#2E86AB] font-bold cursor-pointer hover:underline"
+              className="text-[#A8DADC] font-semibold cursor-pointer hover:underline"
             >
               Sign Up
             </span>
