@@ -240,7 +240,7 @@ export default function Hospitals() {
           <div className="bg-gradient-to-r from-[#2E86AB] to-[#1A5276] rounded-2xl p-6 mb-6 shadow-lg">
             <h2 className="text-white text-xl font-bold mb-1">Find Dialysis Centers Near You</h2>
             <p className="text-white/70 text-sm mb-4">
-              Search across every city, town, and village in India — powered by Google Maps
+              Search across every city, town, and village in India. Powered by Google Maps
             </p>
             <div className="flex gap-3">
               <div className="flex-1 relative">
@@ -313,7 +313,7 @@ export default function Hospitals() {
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                 <div className="p-4 border-b border-gray-100 flex items-center justify-between">
                   <h3 className="font-bold text-[#1A5276] text-sm flex items-center gap-2">
-                    <MapPin size={16} className="text-[#2E86AB]" /> Dialysis Centers Map — India
+                    <MapPin size={16} className="text-[#2E86AB]" /> Dialysis Centers Map in India
                   </h3>
                   <button
                     onClick={() => openGoogleMaps('dialysis center India')}
