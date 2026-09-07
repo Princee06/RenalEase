@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useUser } from '../../context/UserContext';
+import { API_BASE_URL } from '../../api';
 import botLogo from '../../assets/bot-logo.png';
 import { Send, X, Maximize2 } from 'lucide-react';
 
@@ -61,7 +62,7 @@ export default function FloatingChatBubble() {
         .slice(firstUserIdx)
         .map((m) => ({ role: m.role, content: m.content }));
 
-      const response = await fetch('http://localhost:5001/api/chat', {
+      const response = await fetch(`${API_BASE_URL}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -74,16 +75,23 @@ export default function FloatingChatBubble() {
 
       if (!response.ok) {
         const errData = await response.json();
-        throw new Error(errData.error || `Server responded with status ${response.status}`);
+        throw new Error(
+          errData.error || `Server responded with status ${response.status}`
+        );
       }
 
       const data = await response.json();
       const reply =
         data.content?.[0]?.text ||
         'Sorry, I could not process your request. Please try again.';
-      setMessages([...newMessages, { role: 'assistant', content: reply }]);
+
+      setMessages([
+        ...newMessages,
+        { role: 'assistant', content: reply },
+      ]);
     } catch (error) {
       console.error('Chat error:', error);
+
       setMessages([
         ...newMessages,
         {
@@ -106,23 +114,36 @@ export default function FloatingChatBubble() {
           {/* Header */}
           <div className="bg-gradient-to-r from-[#2E86AB] to-[#1A5276] px-4 py-3 flex items-center justify-between flex-shrink-0">
             <div className="flex items-center gap-2.5">
-              <img src={botLogo} alt="RenalEase AI" className="w-8 h-8 rounded-full object-cover bg-white/20" />
+              <img
+                src={botLogo}
+                alt="RenalEase AI"
+                className="w-8 h-8 rounded-full object-cover bg-white/20"
+              />
+
               <div>
-                <p className="text-white font-semibold text-sm leading-tight">RenalEase AI</p>
+                <p className="text-white font-semibold text-sm leading-tight">
+                  RenalEase AI
+                </p>
+
                 <p className="text-white/70 text-[11px] flex items-center gap-1">
                   <span className="w-1.5 h-1.5 bg-green-400 rounded-full inline-block" />
                   Online
                 </p>
               </div>
             </div>
+
             <div className="flex items-center gap-1">
               <button
-                onClick={() => { setIsOpen(false); navigate('/chatbot'); }}
+                onClick={() => {
+                  setIsOpen(false);
+                  navigate('/chatbot');
+                }}
                 title="Open full assistant"
                 className="text-white/80 hover:text-white hover:bg-white/10 p-1.5 rounded-lg transition-colors"
               >
                 <Maximize2 size={15} />
               </button>
+
               <button
                 onClick={() => setIsOpen(false)}
                 title="Close"
@@ -137,24 +158,44 @@ export default function FloatingChatBubble() {
           <div className="flex-1 overflow-y-auto px-4 py-4 bg-[#F4F9FF]">
             <div className="flex flex-col gap-3">
               {messages.map((msg, idx) => (
-                <div key={idx} className={`flex gap-2 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
+                <div
+                  key={idx}
+                  className={`flex gap-2 ${
                     msg.role === 'user'
-                      ? 'bg-[#A8DADC] text-[#1A5276] font-bold text-[10px]'
-                      : 'bg-gradient-to-r from-[#2E86AB] to-[#1A5276]'
-                  }`}>
-                    {msg.role === 'user'
-                      ? getInitials(user?.fullName)
-                      : <img src={botLogo} alt="" className="w-full h-full rounded-full object-cover" />
-                    }
+                      ? 'flex-row-reverse'
+                      : 'flex-row'
+                  }`}
+                >
+                  <div
+                    className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
+                      msg.role === 'user'
+                        ? 'bg-[#A8DADC] text-[#1A5276] font-bold text-[10px]'
+                        : 'bg-gradient-to-r from-[#2E86AB] to-[#1A5276]'
+                    }`}
+                  >
+                    {msg.role === 'user' ? (
+                      getInitials(user?.fullName)
+                    ) : (
+                      <img
+                        src={botLogo}
+                        alt=""
+                        className="w-full h-full rounded-full object-cover"
+                      />
+                    )}
                   </div>
-                  <div className={`max-w-[75%] px-3 py-2 rounded-2xl text-[13px] leading-relaxed ${
-                    msg.role === 'user'
-                      ? 'bg-[#2E86AB] text-white rounded-tr-sm'
-                      : 'bg-white text-gray-700 shadow-sm border border-gray-100 rounded-tl-sm'
-                  }`}>
+
+                  <div
+                    className={`max-w-[75%] px-3 py-2 rounded-2xl text-[13px] leading-relaxed ${
+                      msg.role === 'user'
+                        ? 'bg-[#2E86AB] text-white rounded-tr-sm'
+                        : 'bg-white text-gray-700 shadow-sm border border-gray-100 rounded-tl-sm'
+                    }`}
+                  >
                     {msg.content.split('\n').map((line, i) => (
-                      <span key={i}>{line}{i < msg.content.split('\n').length - 1 && <br />}</span>
+                      <span key={i}>
+                        {line}
+                        {i < msg.content.split('\n').length - 1 && <br />}
+                      </span>
                     ))}
                   </div>
                 </div>
@@ -163,8 +204,13 @@ export default function FloatingChatBubble() {
               {loading && (
                 <div className="flex gap-2">
                   <div className="w-7 h-7 rounded-full bg-gradient-to-r from-[#2E86AB] to-[#1A5276] flex items-center justify-center flex-shrink-0">
-                    <img src={botLogo} alt="" className="w-full h-full rounded-full object-cover" />
+                    <img
+                      src={botLogo}
+                      alt=""
+                      className="w-full h-full rounded-full object-cover"
+                    />
                   </div>
+
                   <div className="bg-white px-3 py-2 rounded-2xl rounded-tl-sm shadow-sm border border-gray-100">
                     <div className="flex gap-1 items-center h-4">
                       {[0, 1, 2].map((i) => (
@@ -178,6 +224,7 @@ export default function FloatingChatBubble() {
                   </div>
                 </div>
               )}
+
               <div ref={messagesEndRef} />
             </div>
           </div>
@@ -199,6 +246,7 @@ export default function FloatingChatBubble() {
                 className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-[13px] text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#2E86AB] transition resize-none"
                 style={{ maxHeight: '80px' }}
               />
+
               <button
                 onClick={() => sendMessage()}
                 disabled={!input.trim() || loading}
@@ -221,7 +269,12 @@ export default function FloatingChatBubble() {
         className="fixed bottom-6 right-6 z-50 w-16 h-16 rounded-full shadow-2xl bg-white border-2 border-[#A8DADC] flex items-center justify-center hover:scale-110 active:scale-95 transition-transform duration-200"
         title="Chat with RenalEase AI"
       >
-        <img src={botLogo} alt="RenalEase AI Assistant" className="w-full h-full rounded-full object-cover" />
+        <img
+          src={botLogo}
+          alt="RenalEase AI Assistant"
+          className="w-full h-full rounded-full object-cover"
+        />
+
         {!isOpen && (
           <span className="absolute top-0 right-0 w-3.5 h-3.5 bg-green-400 border-2 border-white rounded-full" />
         )}
