@@ -3,7 +3,7 @@ import { auth } from "./firebase";
 
 // Uses REACT_APP_API_URL if set (e.g. in Vercel's environment variables),
 // otherwise falls back to localhost for local development.
-const API_BASE_URL =
+export const API_BASE_URL =
   process.env.REACT_APP_API_URL || "http://localhost:5001/api";
 
 /**
@@ -39,9 +39,18 @@ async function apiRequest(path, options = {}) {
 
 export const api = {
   get: (path) => apiRequest(path, { method: "GET" }),
+
   post: (path, body) =>
-    apiRequest(path, { method: "POST", body: JSON.stringify(body) }),
+    apiRequest(path, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
   put: (path, body) =>
-    apiRequest(path, { method: "PUT", body: JSON.stringify(body) }),
+    apiRequest(path, {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }),
+
   delete: (path) => apiRequest(path, { method: "DELETE" }),
 };
