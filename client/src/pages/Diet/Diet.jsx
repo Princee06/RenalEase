@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../../context/UserContext';
+import { useAuth } from '../../context/AuthContext';
+import { dietService } from '../../services/dietService';
 import logo from '../../assets/logo.png';
 import {
   LayoutDashboard, Activity, Pill, Droplets, Salad, CalendarDays,
@@ -31,96 +33,26 @@ const DAILY_LIMITS = [
   { label: 'Calories', current: 1600, limit: 2000, unit: 'kcal', color: 'bg-green-500', light: 'bg-green-50', border: 'border-green-200', text: 'text-green-600' },
 ];
 
-const FOOD_LOG = [
-  { id: 1, meal: 'Breakfast', food: 'Idli with sambar (light)', calories: 180, potassium: 200, phosphorus: 90, sodium: 160, time: '8:00 AM' },
-  { id: 2, meal: 'Lunch', food: 'White rice with dal', calories: 420, potassium: 320, phosphorus: 140, sodium: 200, time: '1:00 PM' },
-  { id: 3, meal: 'Snack', food: 'Apple (small)', calories: 52, potassium: 107, phosphorus: 11, sodium: 1, time: '4:00 PM' },
-  { id: 4, meal: 'Dinner', food: 'Chapati with bottle gourd curry', calories: 380, potassium: 380, phosphorus: 130, sodium: 220, time: '8:00 PM' },
-];
-
 const MEALS = ['Breakfast', 'Lunch', 'Snack', 'Dinner'];
 
 const GOOD_FOODS = [
-  {
-    category: 'Vegetables',
-    items: ['Cabbage', 'Cauliflower', 'Bell peppers', 'Onion', 'Garlic', 'Cucumber', 'Lettuce', 'Radish', 'Eggplant', 'Green beans'],
-  },
-  {
-    category: 'Fruits',
-    items: ['Apples', 'Grapes', 'Pineapple', 'Strawberries', 'Blueberries', 'Pears', 'Peaches', 'Plums', 'Watermelon (small portions)'],
-  },
-  {
-    category: 'Protein (moderate portions)',
-    items: ['Egg whites', 'Skinless chicken', 'Fish', 'Lean turkey', 'Tofu', 'Paneer (limited)'],
-  },
-  {
-    category: 'Grains & Carbs',
-    items: ['White rice', 'Pasta', 'White bread', 'Oats', 'Rice noodles', 'Unsalted crackers'],
-  },
-  {
-    category: 'Healthy Fats',
-    items: ['Olive oil', 'Unsalted butter', 'Avocado oil (small amounts)'],
-  },
-  {
-    category: 'Drinks',
-    items: ['Water (as advised by doctor)', 'Cranberry juice (limited)', 'Clear homemade juices without added sugar'],
-  },
-  {
-    category: 'CKD-Friendly Indian Foods',
-    items: ['Idli', 'Dosa (less salt)', 'Upma', 'Poha', 'Lemon rice (light salt)', 'Bottle gourd curry', 'Ridge gourd curry', 'Plain chapati', 'Rice with simple dal (limited)'],
-  },
+  { category: 'Vegetables', items: ['Cabbage', 'Cauliflower', 'Bell peppers', 'Onion', 'Garlic', 'Cucumber', 'Lettuce', 'Radish', 'Eggplant', 'Green beans'] },
+  { category: 'Fruits', items: ['Apples', 'Grapes', 'Pineapple', 'Strawberries', 'Blueberries', 'Pears', 'Peaches', 'Plums', 'Watermelon (small portions)'] },
+  { category: 'Protein (moderate portions)', items: ['Egg whites', 'Skinless chicken', 'Fish', 'Lean turkey', 'Tofu', 'Paneer (limited)'] },
+  { category: 'Grains & Carbs', items: ['White rice', 'Pasta', 'White bread', 'Oats', 'Rice noodles', 'Unsalted crackers'] },
+  { category: 'Healthy Fats', items: ['Olive oil', 'Unsalted butter', 'Avocado oil (small amounts)'] },
+  { category: 'Drinks', items: ['Water (as advised by doctor)', 'Cranberry juice (limited)', 'Clear homemade juices without added sugar'] },
+  { category: 'CKD-Friendly Indian Foods', items: ['Idli', 'Dosa (less salt)', 'Upma', 'Poha', 'Lemon rice (light salt)', 'Bottle gourd curry', 'Ridge gourd curry', 'Plain chapati', 'Rice with simple dal (limited)'] },
 ];
 
 const AVOID_FOODS = [
-  {
-    category: 'High Potassium Foods',
-    color: 'text-yellow-700',
-    bg: 'bg-yellow-50',
-    border: 'border-yellow-200',
-    items: ['Bananas', 'Oranges', 'Coconut water', 'Potatoes', 'Tomatoes', 'Spinach', 'Avocado', 'Sweet potatoes', 'Dried fruits'],
-  },
-  {
-    category: 'High Phosphorus Foods',
-    color: 'text-orange-700',
-    bg: 'bg-orange-50',
-    border: 'border-orange-200',
-    items: ['Processed cheese', 'Dark cola drinks', 'Packaged foods with phosphate additives', 'Chocolate', 'Ice cream', 'Organ meats'],
-  },
-  {
-    category: 'High Sodium Foods',
-    color: 'text-red-700',
-    bg: 'bg-red-50',
-    border: 'border-red-200',
-    items: ['Chips', 'Instant noodles', 'Pickles', 'Fast food', 'Processed meats', 'Canned soups', 'Frozen meals'],
-  },
-  {
-    category: 'Excess Protein Foods',
-    color: 'text-purple-700',
-    bg: 'bg-purple-50',
-    border: 'border-purple-200',
-    items: ['Red meat (large portions)', 'Protein powders without medical advice', 'Processed meat products'],
-  },
-  {
-    category: 'Drinks to Limit / Avoid',
-    color: 'text-blue-700',
-    bg: 'bg-blue-50',
-    border: 'border-blue-200',
-    items: ['Alcohol', 'Soft drinks', 'Energy drinks', 'Excess milkshakes', 'Packaged sugary juices'],
-  },
-  {
-    category: 'Other Foods to Limit',
-    color: 'text-gray-700',
-    bg: 'bg-gray-50',
-    border: 'border-gray-200',
-    items: ['Salt-heavy snacks', 'Bakery items with sodium/phosphates', 'Packaged sauces and ketchup', 'Deep-fried foods'],
-  },
-  {
-    category: 'Indian Foods to Avoid Frequently',
-    color: 'text-red-700',
-    bg: 'bg-red-50',
-    border: 'border-red-200',
-    items: ['Pickles', 'Papad', 'Salted chutney powders', 'Heavy gravies', 'Restaurant curries', 'Processed snacks'],
-  },
+  { category: 'High Potassium Foods', color: 'text-yellow-700', bg: 'bg-yellow-50', border: 'border-yellow-200', items: ['Bananas', 'Oranges', 'Coconut water', 'Potatoes', 'Tomatoes', 'Spinach', 'Avocado', 'Sweet potatoes', 'Dried fruits'] },
+  { category: 'High Phosphorus Foods', color: 'text-orange-700', bg: 'bg-orange-50', border: 'border-orange-200', items: ['Processed cheese', 'Dark cola drinks', 'Packaged foods with phosphate additives', 'Chocolate', 'Ice cream', 'Organ meats'] },
+  { category: 'High Sodium Foods', color: 'text-red-700', bg: 'bg-red-50', border: 'border-red-200', items: ['Chips', 'Instant noodles', 'Pickles', 'Fast food', 'Processed meats', 'Canned soups', 'Frozen meals'] },
+  { category: 'Excess Protein Foods', color: 'text-purple-700', bg: 'bg-purple-50', border: 'border-purple-200', items: ['Red meat (large portions)', 'Protein powders without medical advice', 'Processed meat products'] },
+  { category: 'Drinks to Limit / Avoid', color: 'text-blue-700', bg: 'bg-blue-50', border: 'border-blue-200', items: ['Alcohol', 'Soft drinks', 'Energy drinks', 'Excess milkshakes', 'Packaged sugary juices'] },
+  { category: 'Other Foods to Limit', color: 'text-gray-700', bg: 'bg-gray-50', border: 'border-gray-200', items: ['Salt-heavy snacks', 'Bakery items with sodium/phosphates', 'Packaged sauces and ketchup', 'Deep-fried foods'] },
+  { category: 'Indian Foods to Avoid Frequently', color: 'text-red-700', bg: 'bg-red-50', border: 'border-red-200', items: ['Pickles', 'Papad', 'Salted chutney powders', 'Heavy gravies', 'Restaurant curries', 'Processed snacks'] },
 ];
 
 function getInitials(name) {
@@ -133,34 +65,72 @@ const inputClass = "w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm
 export default function Diet() {
   const navigate = useNavigate();
   const { user } = useUser();
+  const { logout } = useAuth();
   const [activePath, setActivePath] = useState('/diet');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState('tracker');
-  const [foodLog, setFoodLog] = useState(FOOD_LOG);
+
+  const [foodLog, setFoodLog] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+
   const [showAddForm, setShowAddForm] = useState(false);
   const [newFood, setNewFood] = useState({
     meal: 'Breakfast', food: '', calories: '',
     potassium: '', phosphorus: '', sodium: '', time: '',
   });
 
-  const addFood = () => {
+  // Load today's food log from the backend on mount
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      setLoadError('');
+      try {
+        const data = await dietService.getTodayLog();
+        if (!cancelled) setFoodLog(data);
+      } catch (err) {
+        if (!cancelled) setLoadError('Could not load your food log. Please refresh to try again.');
+        console.error('Failed to load diet log:', err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const addFood = async () => {
     if (!newFood.food || !newFood.meal) return;
     const now = new Date();
     const time = newFood.time || `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
-    setFoodLog([...foodLog, {
-      id: Date.now(),
-      ...newFood,
-      calories: parseInt(newFood.calories) || 0,
-      potassium: parseInt(newFood.potassium) || 0,
-      phosphorus: parseInt(newFood.phosphorus) || 0,
-      sodium: parseInt(newFood.sodium) || 0,
-      time,
-    }]);
-    setNewFood({ meal: 'Breakfast', food: '', calories: '', potassium: '', phosphorus: '', sodium: '', time: '' });
-    setShowAddForm(false);
+
+    setSaving(true);
+    setSaveError('');
+    try {
+      const created = await dietService.create({ ...newFood, time });
+      setFoodLog((prev) => [...prev, created]);
+      setNewFood({ meal: 'Breakfast', food: '', calories: '', potassium: '', phosphorus: '', sodium: '', time: '' });
+      setShowAddForm(false);
+    } catch (err) {
+      setSaveError('Could not save this food entry. Please try again.');
+      console.error('Failed to create diet log entry:', err);
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const deleteFood = (id) => setFoodLog(foodLog.filter((f) => f.id !== id));
+  const deleteFood = async (id) => {
+    const previous = foodLog;
+    setFoodLog(foodLog.filter((f) => f.id !== id)); // optimistic update
+    try {
+      await dietService.remove(id);
+    } catch (err) {
+      setFoodLog(previous); // roll back on failure
+      console.error('Failed to delete diet log entry:', err);
+    }
+  };
 
   const totalCalories = foodLog.reduce((acc, f) => acc + f.calories, 0);
   const totalPotassium = foodLog.reduce((acc, f) => acc + f.potassium, 0);
@@ -208,7 +178,7 @@ export default function Diet() {
           })}
         </nav>
         <div className="px-2 py-4 border-t border-white/10">
-          <button onClick={() => navigate('/')}
+          <button onClick={async () => { await logout(); navigate('/'); }}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/60 hover:bg-white/10 hover:text-white transition-all duration-200">
             <LogOut size={18} className="flex-shrink-0" />
             {sidebarOpen && <span className="text-sm">Sign Out</span>}
@@ -243,6 +213,18 @@ export default function Diet() {
 
         <div className="px-8 py-6">
 
+          {loadError && (
+            <div className="bg-red-50 border border-red-200 text-red-500 text-sm px-4 py-3 rounded-xl mb-6">
+              {loadError}
+            </div>
+          )}
+
+          {loading ? (
+            <div className="bg-white rounded-2xl p-10 text-center shadow-sm border border-gray-100">
+              <p className="text-gray-400 font-medium">Loading your food log...</p>
+            </div>
+          ) : (
+          <>
           {/* Daily Summary Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             {[
@@ -329,10 +311,17 @@ export default function Diet() {
                     className={inputClass} />
                 </div>
               </div>
+
+              {saveError && (
+                <div className="bg-red-50 border border-red-200 text-red-500 text-sm px-4 py-3 rounded-xl mt-4">
+                  {saveError}
+                </div>
+              )}
+
               <div className="flex gap-3 mt-4">
-                <button onClick={addFood}
-                  className="bg-[#2E86AB] text-white font-semibold px-6 py-2.5 rounded-xl hover:bg-[#1A5276] transition-all flex items-center gap-2">
-                  <CheckCircle size={16} /> Save Food
+                <button onClick={addFood} disabled={saving}
+                  className="bg-[#2E86AB] text-white font-semibold px-6 py-2.5 rounded-xl hover:bg-[#1A5276] transition-all flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
+                  <CheckCircle size={16} /> {saving ? 'Saving...' : 'Save Food'}
                 </button>
                 <button onClick={() => setShowAddForm(false)}
                   className="border border-gray-200 text-gray-500 font-semibold px-6 py-2.5 rounded-xl hover:bg-gray-50 transition-all">
@@ -408,7 +397,7 @@ export default function Diet() {
             </div>
           )}
 
-          {/* Daily Limits Tab */}
+          {/* Daily Limits Tab (reference values, not yet personalized from real logs) */}
           {activeTab === 'limits' && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {DAILY_LIMITS.map((item) => {
@@ -502,6 +491,8 @@ export default function Diet() {
               </div>
 
             </div>
+          )}
+          </>
           )}
 
         </div>

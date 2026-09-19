@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../../context/UserContext';
+import { useAuth } from '../../context/AuthContext';
+import { dialysisService } from '../../services/dialysisService';
 import logo from '../../assets/logo.png';
 import {
   LayoutDashboard, Activity, Pill, Droplets, Salad, CalendarDays,
   Stethoscope, BookOpen, Baby, Settings, LogOut, Menu, Plus,
   Clock, CheckCircle, Trash2, ChevronRight,
-  Timer, ClipboardList, TrendingUp, Home, Building2
+  Timer, ClipboardList, TrendingUp, Home, Building2, Loader2
 } from 'lucide-react';
 
 const NAV_ITEMS = [
@@ -20,14 +22,6 @@ const NAV_ITEMS = [
   { icon: BookOpen, label: 'CKD Education', path: '/education' },
   { icon: Baby, label: 'Kids Mode', path: '/kids' },
   { icon: Settings, label: 'Settings', path: '/settings' },
-];
-
-const INITIAL_SESSIONS = [
-  { id: 1, date: '2026-04-03', type: 'Hemodialysis', duration: 240, center: 'Apollo Hospital', doctor: 'Dr. Rajesh Kumar', bloodFlow: 300, weight_pre: 68.5, weight_post: 66.2, notes: 'Routine session, no complications.', status: 'Completed', dialysisMode: 'HD' },
-  { id: 2, date: '2026-04-01', type: 'Hemodialysis', duration: 240, center: 'Apollo Hospital', doctor: 'Dr. Rajesh Kumar', bloodFlow: 300, weight_pre: 69.0, weight_post: 66.8, notes: 'Slight cramping during session.', status: 'Completed', dialysisMode: 'HD' },
-  { id: 3, date: '2026-03-29', type: 'Peritoneal Dialysis', exchanges: 4, dwellTime: 4, fluidIn: 2000, fluidOut: 2150, weight_pre: 68.0, weight_post: 67.8, notes: 'Home PD, all exchanges completed.', status: 'Completed', dialysisMode: 'PD' },
-  { id: 4, date: '2026-03-27', type: 'Hemodialysis', duration: 240, center: 'Apollo Hospital', doctor: 'Dr. Rajesh Kumar', bloodFlow: 300, weight_pre: 69.2, weight_post: 67.0, notes: 'BP slightly high at start.', status: 'Completed', dialysisMode: 'HD' },
-  { id: 5, date: '2026-04-05', type: 'Hemodialysis', duration: 240, center: 'Apollo Hospital', doctor: 'Dr. Rajesh Kumar', bloodFlow: 300, weight_pre: null, weight_post: null, notes: '', status: 'Upcoming', dialysisMode: 'HD' },
 ];
 
 const HD_DEFAULT = {
@@ -58,16 +52,19 @@ const inputClass = "w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm
 export default function Dialysis() {
   const navigate = useNavigate();
   const { user } = useUser();
+  const { logout } = useAuth();
   const [activePath, setActivePath] = useState('/dialysis');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState('upcoming');
   const userMode = user.dialysisType === 'peritoneal' ? 'PD' : 'HD';
-const [sessions, setSessions] = useState(
-  INITIAL_SESSIONS.filter((s) => s.dialysisMode === userMode)
-);
+  const [sessions, setSessions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
   const [formMode, setFormMode] = useState('HD');
   const [newSession, setNewSession] = useState(HD_DEFAULT);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
   useEffect(() => {
     if (user.dialysisType === 'peritoneal') {
@@ -79,11 +76,30 @@ const [sessions, setSessions] = useState(
     }
   }, [user.dialysisType]);
 
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      setLoadError('');
+      try {
+        const all = await dialysisService.getAll();
+        if (!cancelled) {
+          setSessions(all.filter((s) => s.dialysisMode === userMode));
+        }
+      } catch (err) {
+        if (!cancelled) setLoadError('Could not load your dialysis sessions. Please refresh the page.');
+        console.error('Failed to load dialysis sessions:', err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [userMode]);
+
   const upcomingSessions = sessions.filter((s) => s.status === 'Upcoming');
   const completedSessions = sessions.filter((s) => s.status === 'Completed');
   const hdSessions = completedSessions.filter((s) => s.dialysisMode === 'HD');
   const pdSessions = completedSessions.filter((s) => s.dialysisMode === 'PD');
-  const totalHDHours = hdSessions.reduce((acc, s) => acc + (s.duration || 0), 0);
   const avgDuration = hdSessions.length
     ? Math.round(hdSessions.reduce((acc, s) => acc + s.duration, 0) / hdSessions.length)
     : 0;
@@ -93,22 +109,36 @@ const [sessions, setSessions] = useState(
     setNewSession(mode === 'HD' ? HD_DEFAULT : PD_DEFAULT);
   };
 
-  const addSession = () => {
+  const addSession = async () => {
     if (!newSession.date) return;
     if (formMode === 'HD' && !newSession.duration) return;
     if (formMode === 'PD' && !newSession.exchanges) return;
-    setSessions([...sessions, {
-      id: Date.now(),
-      ...newSession,
-      duration: newSession.duration ? parseInt(newSession.duration) : null,
-      exchanges: newSession.exchanges ? parseInt(newSession.exchanges) : null,
-      status: new Date(newSession.date) > new Date() ? 'Upcoming' : 'Completed',
-    }]);
-    setNewSession(formMode === 'HD' ? HD_DEFAULT : PD_DEFAULT);
-    setShowAddForm(false);
+
+    setSaving(true);
+    setSaveError('');
+    try {
+      const created = await dialysisService.create(newSession);
+      setSessions([...sessions, created]);
+      setNewSession(formMode === 'HD' ? HD_DEFAULT : PD_DEFAULT);
+      setShowAddForm(false);
+    } catch (err) {
+      setSaveError('Could not save this session. Please try again.');
+      console.error('Failed to create dialysis session:', err);
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const deleteSession = (id) => setSessions(sessions.filter((s) => s.id !== id));
+  const deleteSession = async (id) => {
+    const previous = sessions;
+    setSessions(sessions.filter((s) => s.id !== id));
+    try {
+      await dialysisService.remove(id);
+    } catch (err) {
+      setSessions(previous); // roll back if the delete failed
+      console.error('Failed to delete dialysis session:', err);
+    }
+  };
 
   return (
     <div className="flex h-screen bg-[#F4F9FF] overflow-hidden">
@@ -150,7 +180,7 @@ const [sessions, setSessions] = useState(
           })}
         </nav>
         <div className="px-2 py-4 border-t border-white/10">
-          <button onClick={() => navigate('/')}
+          <button onClick={async () => { await logout(); navigate('/'); }}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/60 hover:bg-white/10 hover:text-white transition-all duration-200">
             <LogOut size={18} className="flex-shrink-0" />
             {sidebarOpen && <span className="text-sm">Sign Out</span>}
@@ -184,6 +214,19 @@ const [sessions, setSessions] = useState(
         </div>
 
         <div className="px-8 py-6">
+
+          {loading && (
+            <div className="bg-white rounded-2xl p-10 text-center shadow-sm border border-gray-100 mb-6 flex flex-col items-center gap-3">
+              <Loader2 size={28} className="text-[#2E86AB] animate-spin" />
+              <p className="text-gray-400 text-sm">Loading your dialysis sessions...</p>
+            </div>
+          )}
+
+          {!loading && loadError && (
+            <div className="bg-red-50 border border-red-200 text-red-500 text-sm px-4 py-3 rounded-xl mb-6">
+              {loadError}
+            </div>
+          )}
 
           {/* Stats Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -408,13 +451,22 @@ const [sessions, setSessions] = useState(
                 </div>
               </div>
 
+              {saveError && (
+                <div className="bg-red-50 border border-red-200 text-red-500 text-sm px-4 py-3 rounded-xl mt-4">
+                  {saveError}
+                </div>
+              )}
+
               <div className="flex gap-3 mt-4">
-                <button onClick={addSession}
-                  className="bg-[#2E86AB] text-white font-semibold px-6 py-2.5 rounded-xl hover:bg-[#1A5276] transition-all flex items-center gap-2">
-                  <CheckCircle size={16} /> Save Session
+                <button onClick={addSession} disabled={saving}
+                  className="bg-[#2E86AB] text-white font-semibold px-6 py-2.5 rounded-xl hover:bg-[#1A5276] transition-all flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
+                  {saving
+                    ? <><Loader2 size={16} className="animate-spin" /> Saving...</>
+                    : <><CheckCircle size={16} /> Save Session</>
+                  }
                 </button>
-                <button onClick={() => setShowAddForm(false)}
-                  className="border border-gray-200 text-gray-500 font-semibold px-6 py-2.5 rounded-xl hover:bg-gray-50 transition-all">
+                <button onClick={() => setShowAddForm(false)} disabled={saving}
+                  className="border border-gray-200 text-gray-500 font-semibold px-6 py-2.5 rounded-xl hover:bg-gray-50 transition-all disabled:opacity-60">
                   Cancel
                 </button>
               </div>

@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../../context/UserContext';
+import { useAuth } from '../../context/AuthContext';
+import { medicationService } from '../../services/medicationService';
 import logo from '../../assets/logo.png';
 import {
   LayoutDashboard, Activity, Pill, Droplets, Salad, CalendarDays,
@@ -21,17 +23,10 @@ const NAV_ITEMS = [
   { icon: Settings, label: 'Settings', path: '/settings' },
 ];
 
-const INITIAL_MEDS = [
-  { id: 1, name: 'Nicardia XL 30', dose: '30mg', times: ['Morning'], specificTime: '08:00', mealInstruction: 'After food', frequency: 'Daily', taken: false, refillDays: 5, purpose: 'Blood Pressure' },
-  { id: 2, name: 'Sodium Bicarbonate', dose: '500mg', times: ['Afternoon'], specificTime: '13:00', mealInstruction: 'After food', frequency: 'Daily', taken: false, refillDays: 12, purpose: 'Acidosis Control' },
-  { id: 3, name: 'Rocaltrol', dose: '0.25mcg', times: ['Morning', 'Evening'], specificTime: '', mealInstruction: 'With food', frequency: 'Daily', taken: false, refillDays: 20, purpose: 'Vitamin D' },
-  { id: 4, name: 'Eprex 4000', dose: '4000 IU', times: ['Morning'], specificTime: '09:00', mealInstruction: 'Before food', frequency: '3x/week', taken: true, refillDays: 8, purpose: 'Anemia' },
-  { id: 5, name: 'Ferium XT', dose: '325mg', times: ['Night'], specificTime: '21:00', mealInstruction: 'After food', frequency: 'Daily', taken: false, refillDays: 3, purpose: 'Iron Deficiency' },
-  { id: 6, name: 'Renvela 800', dose: '800mg', times: ['Morning', 'Afternoon', 'Evening'], specificTime: '', mealInstruction: 'With meals', frequency: 'With meals', taken: false, refillDays: 15, purpose: 'Phosphorus Control' },
-];
-
 const TIME_SLOTS = ['Morning', 'Afternoon', 'Evening', 'Night'];
-const TIME_ICONS_LUCIDE = { Morning: Sunrise, Afternoon: Sun, Evening: Sunset, Night: Moon };function getInitials(name) {
+const TIME_ICONS_LUCIDE = { Morning: Sunrise, Afternoon: Sun, Evening: Sunset, Night: Moon };
+
+function getInitials(name) {
   if (!name) return '?';
   return name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
 }
@@ -45,20 +40,62 @@ function formatTime(time24) {
   return `${hour12}:${m} ${ampm}`;
 }
 
+const NEW_MED_DEFAULT = {
+  name: '', dose: '', times: [], specificTime: '',
+  mealInstruction: 'After food', frequency: 'Daily', purpose: '',
+};
+
 export default function Medications() {
   const navigate = useNavigate();
   const { user } = useUser();
+  const { logout } = useAuth();
   const [activePath, setActivePath] = useState('/medications');
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [meds, setMeds] = useState(INITIAL_MEDS);
+
+  const [meds, setMeds] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+
   const [showAddForm, setShowAddForm] = useState(false);
   const [activeTab, setActiveTab] = useState('schedule');
-  const [newMed, setNewMed] = useState({
-    name: '', dose: '', times: [], specificTime: '',
-    mealInstruction: 'After food', frequency: 'Daily', purpose: '',
-  });
+  const [newMed, setNewMed] = useState(NEW_MED_DEFAULT);
 
-  const toggleTaken = (id) => setMeds(meds.map((m) => m.id === id ? { ...m, taken: !m.taken } : m));
+  // Load medications from the backend on mount
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      setLoadError('');
+      try {
+        const data = await medicationService.getAll();
+        if (!cancelled) setMeds(data);
+      } catch (err) {
+        if (!cancelled) setLoadError('Could not load your medications. Please refresh to try again.');
+        console.error('Failed to load medications:', err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const toggleTaken = async (id) => {
+    const target = meds.find((m) => m.id === id);
+    if (!target) return;
+    const nextTaken = !target.taken;
+
+    // optimistic update
+    setMeds(meds.map((m) => m.id === id ? { ...m, taken: nextTaken } : m));
+    try {
+      await medicationService.setTaken(id, nextTaken);
+    } catch (err) {
+      // roll back on failure
+      setMeds(meds.map((m) => m.id === id ? { ...m, taken: !nextTaken } : m));
+      console.error('Failed to update medication taken status:', err);
+    }
+  };
 
   const toggleTime = (slot) => {
     setNewMed((prev) => ({
@@ -69,14 +106,34 @@ export default function Medications() {
     }));
   };
 
-  const addMedication = () => {
+  const addMedication = async () => {
     if (!newMed.name || !newMed.dose || newMed.times.length === 0) return;
-    setMeds([...meds, { id: Date.now(), ...newMed, taken: false, refillDays: 30 }]);
-    setNewMed({ name: '', dose: '', times: [], specificTime: '', mealInstruction: 'After food', frequency: 'Daily', purpose: '' });
-    setShowAddForm(false);
+
+    setSaving(true);
+    setSaveError('');
+    try {
+      const created = await medicationService.create(newMed);
+      setMeds((prev) => [...prev, created]);
+      setNewMed(NEW_MED_DEFAULT);
+      setShowAddForm(false);
+    } catch (err) {
+      setSaveError('Could not save this medication. Please try again.');
+      console.error('Failed to create medication:', err);
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const deleteMed = (id) => setMeds(meds.filter((m) => m.id !== id));
+  const deleteMed = async (id) => {
+    const previous = meds;
+    setMeds(meds.filter((m) => m.id !== id)); // optimistic update
+    try {
+      await medicationService.remove(id);
+    } catch (err) {
+      setMeds(previous); // roll back on failure
+      console.error('Failed to delete medication:', err);
+    }
+  };
 
   const takenCount = meds.filter((m) => m.taken).length;
   const lowRefill = meds.filter((m) => m.refillDays <= 7);
@@ -123,7 +180,7 @@ export default function Medications() {
           })}
         </nav>
         <div className="px-2 py-4 border-t border-white/10">
-          <button onClick={() => navigate('/')}
+          <button onClick={async () => { await logout(); navigate('/'); }}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/60 hover:bg-white/10 hover:text-white transition-all duration-200">
             <LogOut size={18} className="flex-shrink-0" />
             {sidebarOpen && <span className="text-sm">Sign Out</span>}
@@ -156,6 +213,18 @@ export default function Medications() {
 
         <div className="px-8 py-6">
 
+          {loadError && (
+            <div className="bg-red-50 border border-red-200 text-red-500 text-sm px-4 py-3 rounded-xl mb-6">
+              {loadError}
+            </div>
+          )}
+
+          {loading ? (
+            <div className="bg-white rounded-2xl p-10 text-center shadow-sm border border-gray-100">
+              <p className="text-gray-400 font-medium">Loading your medications...</p>
+            </div>
+          ) : (
+          <>
           {/* Summary Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             {[
@@ -264,10 +333,17 @@ export default function Medications() {
                     placeholder="e.g. Blood Pressure Control" className={inputClass} />
                 </div>
               </div>
+
+              {saveError && (
+                <div className="bg-red-50 border border-red-200 text-red-500 text-sm px-4 py-3 rounded-xl mt-4">
+                  {saveError}
+                </div>
+              )}
+
               <div className="flex gap-3 mt-4">
-                <button onClick={addMedication}
-                  className="bg-[#2E86AB] text-white font-semibold px-6 py-2.5 rounded-xl hover:bg-[#1A5276] transition-all flex items-center gap-2">
-                  <CheckCircle size={16} /> Save Medication
+                <button onClick={addMedication} disabled={saving}
+                  className="bg-[#2E86AB] text-white font-semibold px-6 py-2.5 rounded-xl hover:bg-[#1A5276] transition-all flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
+                  <CheckCircle size={16} /> {saving ? 'Saving...' : 'Save Medication'}
                 </button>
                 <button onClick={() => setShowAddForm(false)}
                   className="border border-gray-200 text-gray-500 font-semibold px-6 py-2.5 rounded-xl hover:bg-gray-50 transition-all">
@@ -401,6 +477,8 @@ export default function Medications() {
                 </tbody>
               </table>
             </div>
+          )}
+          </>
           )}
         </div>
       </main>
