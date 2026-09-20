@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../../context/UserContext';
+import { appointmentService } from '../../services/appointmentService';
 import logo from '../../assets/logo.png';
 import {
   LayoutDashboard, Activity, Pill, Droplets, Salad, CalendarDays,
@@ -20,14 +21,6 @@ const NAV_ITEMS = [
   { icon: BookOpen, label: 'CKD Education', path: '/education' },
   { icon: Baby, label: 'Kids Mode', path: '/kids' },
   { icon: Settings, label: 'Settings', path: '/settings' },
-];
-
-const INITIAL_APPOINTMENTS = [
-  { id: 1, doctor: 'Dr. Rajesh Kumar', specialty: 'Nephrologist', hospital: 'Apollo Hospital', date: '2026-05-28', time: '10:30 AM', type: 'Regular Checkup', status: 'Upcoming', phone: '+91 9876543210', notes: 'Bring latest lab reports' },
-  { id: 2, doctor: 'Dr. Priya Sharma', specialty: 'Dietitian', hospital: 'KIMS Hospital', date: '2026-06-02', time: '2:00 PM', type: 'Diet Consultation', status: 'Upcoming', phone: '+91 9123456789', notes: '' },
-  { id: 3, doctor: 'Dr. Rajesh Kumar', specialty: 'Nephrologist', hospital: 'Apollo Hospital', date: '2026-05-01', time: '10:30 AM', type: 'Regular Checkup', status: 'Completed', phone: '+91 9876543210', notes: 'Reviewed eGFR trends' },
-  { id: 4, doctor: 'Dr. Suresh Reddy', specialty: 'Cardiologist', hospital: 'Yashoda Hospital', date: '2026-04-15', time: '11:00 AM', type: 'BP Monitoring', status: 'Completed', phone: '+91 9988776655', notes: 'BP medication adjusted' },
-  { id: 5, doctor: 'Dr. Rajesh Kumar', specialty: 'Nephrologist', hospital: 'Apollo Hospital', date: '2026-04-01', time: '10:30 AM', type: 'Regular Checkup', status: 'Completed', phone: '+91 9876543210', notes: '' },
 ];
 
 const APPOINTMENT_TYPES = [
@@ -68,7 +61,11 @@ export default function Appointments() {
   const { user } = useUser();
   const [activePath, setActivePath] = useState('/appointments');
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [appointments, setAppointments] = useState(INITIAL_APPOINTMENTS);
+  const [appointments, setAppointments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const [activeTab, setActiveTab] = useState('upcoming');
   const [showAddForm, setShowAddForm] = useState(false);
   const [newAppt, setNewAppt] = useState({
@@ -76,6 +73,24 @@ export default function Appointments() {
     date: '', time: '', type: 'Regular Checkup',
     phone: '', notes: '',
   });
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      setLoadError('');
+      try {
+        const data = await appointmentService.getAll();
+        if (!cancelled) setAppointments(data);
+      } catch (err) {
+        if (!cancelled) setLoadError('Could not load your appointments. Please refresh to try again.');
+        console.error('Failed to load appointments:', err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const upcoming = appointments
     .filter((a) => a.status === 'Upcoming')
@@ -85,38 +100,53 @@ export default function Appointments() {
     .filter((a) => a.status === 'Completed')
     .sort((a, b) => new Date(b.date) - new Date(a.date));
 
-  const addAppointment = () => {
-    if (!newAppt.doctor || !newAppt.date || !newAppt.time) return;
+  const addAppointment = async () => {
+    if (!newAppt.doctor || !newAppt.date || !newAppt.time) {
+      setSaveError('Doctor name, date, and time are required.');
+      return;
+    }
 
-    const apptDate = new Date(newAppt.date);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    apptDate.setHours(0, 0, 0, 0);
-    const status = apptDate >= today ? 'Upcoming' : 'Completed';
-
-    const formattedTime = formatTimeTo12Hr(newAppt.time);
-
-    setAppointments([...appointments, {
-      id: Date.now(),
-      ...newAppt,
-      time: formattedTime,
-      status,
-    }]);
-
-    setNewAppt({
-      doctor: '', specialty: '', hospital: '',
-      date: '', time: '', type: 'Regular Checkup',
-      phone: '', notes: '',
-    });
-    setShowAddForm(false);
+    setSaving(true);
+    setSaveError('');
+    try {
+      const created = await appointmentService.create(newAppt);
+      setAppointments((prev) => [...prev, created]);
+      setNewAppt({
+        doctor: '', specialty: '', hospital: '',
+        date: '', time: '', type: 'Regular Checkup',
+        phone: '', notes: '',
+      });
+      setShowAddForm(false);
+    } catch (err) {
+      setSaveError('Could not save this appointment. Please try again.');
+      console.error('Failed to create appointment:', err);
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const deleteAppointment = (id) => setAppointments(appointments.filter((a) => a.id !== id));
+  const deleteAppointment = async (id) => {
+    const previous = appointments;
+    setAppointments(appointments.filter((a) => a.id !== id));
+    try {
+      await appointmentService.remove(id);
+    } catch (err) {
+      setAppointments(previous);
+      console.error('Failed to delete appointment:', err);
+    }
+  };
 
-  const markCompleted = (id) => {
+  const markCompleted = async (id) => {
+    const previous = appointments;
     setAppointments(appointments.map((a) =>
       a.id === id ? { ...a, status: 'Completed' } : a
     ));
+    try {
+      await appointmentService.markCompleted(id);
+    } catch (err) {
+      setAppointments(previous);
+      console.error('Failed to mark appointment completed:', err);
+    }
   };
 
   return (
@@ -315,14 +345,13 @@ export default function Appointments() {
                     placeholder="e.g. Bring latest lab reports" className={inputClass} />
                 </div>
               </div>
+   {saveError && (
+                <p className="text-red-500 text-xs font-medium mt-3">{saveError}</p>
+              )}
               <div className="flex gap-3 mt-4">
-                <button onClick={addAppointment}
-                  className="bg-[#2E86AB] text-white font-semibold px-6 py-2.5 rounded-xl hover:bg-[#1A5276] transition-all flex items-center gap-2">
-                  <CheckCircle size={16} /> Save Appointment
-                </button>
-                <button onClick={() => setShowAddForm(false)}
-                  className="border border-gray-200 text-gray-500 font-semibold px-6 py-2.5 rounded-xl hover:bg-gray-50 transition-all">
-                  Cancel
+                <button onClick={addAppointment} disabled={saving}
+                  className="bg-[#2E86AB] text-white font-semibold px-6 py-2.5 rounded-xl hover:bg-[#1A5276] transition-all flex items-center gap-2 disabled:opacity-60">
+                  <CheckCircle size={16} /> {saving ? 'Saving...' : 'Save Appointment'}
                 </button>
               </div>
             </div>
@@ -345,7 +374,15 @@ export default function Appointments() {
 
           {/* Appointments List */}
           <div className="flex flex-col gap-4">
-            {(activeTab === 'upcoming' ? upcoming : completed).length === 0 ? (
+            {loading ? (
+              <div className="bg-white rounded-2xl p-10 text-center shadow-sm border border-gray-100">
+                <p className="text-gray-400 font-medium">Loading appointments...</p>
+              </div>
+            ) : loadError ? (
+              <div className="bg-white rounded-2xl p-10 text-center shadow-sm border border-gray-100">
+                <p className="text-red-400 font-medium">{loadError}</p>
+              </div>
+            ) : (activeTab === 'upcoming' ? upcoming : completed).length === 0 ? (
               <div className="bg-white rounded-2xl p-10 text-center shadow-sm border border-gray-100">
                 <CalendarDays size={40} className="text-gray-200 mx-auto mb-3" />
                 <p className="text-gray-400 font-medium">No {activeTab} appointments</p>

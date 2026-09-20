@@ -73,14 +73,14 @@ export default function Intro() {
         <div style={fadeDown(step >= 1)} className="relative flex items-center justify-center mb-6">
           {/* Pulse ring */}
           <div
-            className="absolute w-48 h-48 rounded-full border-2 border-white/20"
+            className="absolute w-52 h-52 rounded-full border-2 border-white/20"
             style={{ animation: step >= 1 ? 'pulse-ring 2s ease-out infinite' : 'none' }}
           />
           {/* Logo */}
           <img
             src={logo}
             alt="RenalEase Logo"
-            className="w-44 h-44 object-contain drop-shadow-2xl relative z-10"
+            className="w-48 h-48 object-contain drop-shadow-2xl relative z-10"
             style={{ filter: 'drop-shadow(0 0 20px rgba(168,218,220,0.4))' }}
           />
         </div>

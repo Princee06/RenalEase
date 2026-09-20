@@ -43,7 +43,7 @@ export default function FloatingChatBubble() {
   }, [messages, isOpen]);
 
   // Hide the bubble entirely on the full AI Assistant page
-  if (location.pathname === '/chatbot') {
+  if (location.pathname === '/chatbot' || location.pathname === '/') {
     return null;
   }
 
